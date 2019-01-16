@@ -1,0 +1,64 @@
+buildscript {
+    repositories {
+        maven { url "http://download.osgeo.org/webdav/geotools/" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://jars.interlis.ch" }
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath "ch.so.agi:gretl:1.0.5-SNAPSHOT"
+    }
+}
+
+apply plugin: "ch.so.agi.gretl"
+
+ext {
+    dbUriEdit = "jdbc:postgresql://192.168.50.8/edit"
+    dbUserEdit = "ddluser"
+    dbPwdEdit = "ddluser"
+    dbUriPub = "jdbc:postgresql://192.168.50.8/edit"
+    dbUserPub = "ddluser"
+    dbPwdPub = "ddluser"
+}
+
+import ch.so.agi.gretl.tasks.*
+import ch.so.agi.gretl.api.TransferSet
+
+task createSchemaNpl(type: Ili2pgImportSchema) {
+    description = "Erstellt das Nutzungsplanungs-Datenbankschema (Erfassungsmodell)."
+    database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    models = "SO_Nutzungsplanung_20171118"
+    dbschema = "arp_npl"
+    nameByTopic = true
+    createFk = false
+    createFkIdx = true
+    createGeomIdx = true
+    createUnique = false
+    createNumChecks = false
+    createEnumTabs = true
+    createBasketCol = true
+    createDatasetCol = true
+    strokeArcs = true
+    defaultSrsCode = 2056
+    disableValidation = true
+}
+
+task importNplDataset(type: Ili2pgReplace) {
+    description = "Ersetzt Datensatz in Erfassungsschema."
+    database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    models = "SO_Nutzungsplanung_20171118"
+    dbschema = "arp_npl"
+    dataFile = file("../data/2614.xtf")
+    dataset = "2614"
+    disableValidation = true
+}
+
+task transferArpNpl(type: Db2Db) {
+    description = "Baut Daten vom Erfassungsmodell in das Publikationsmodell um."
+    sourceDb = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    targetDb = [dbUriPub, dbUserPub, dbPwdPub]
+    transferSets = [
+            new TransferSet("transform_arp_npl_pub_nutzungsplanung_grundnutzung_json_dokumente.sql", 'arp_npl_pub.nutzungsplanung_grundnutzung', true)
+    ];
+}

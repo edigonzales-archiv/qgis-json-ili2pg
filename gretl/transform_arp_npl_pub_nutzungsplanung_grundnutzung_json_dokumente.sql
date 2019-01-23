@@ -173,8 +173,8 @@ typ_grundnutzung_json_dokument_agg AS
 (
   SELECT
     typ_grundnutzung_t_id,
-    to_json('[' || dokumente::varchar || ']') as dokumente
-    --('[' || dokumente::varchar || ']') as dokumente
+    --to_json('[' || dokumente::varchar || ']') as dokumente
+    ('[' || dokumente::varchar || ']') as dokumente
   FROM
   (
     SELECT
